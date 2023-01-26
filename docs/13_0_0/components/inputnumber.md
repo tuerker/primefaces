@@ -89,8 +89,8 @@ leadingZero | allow | Sting | Controls leading zero behavior. Valid values are "
 inputMode | null | String | HTML5 inputmode attribute for hinting at the type of data this control has for touch devices. Default is 'numeric' if decimalPlaces==0, 'decimal' if decimalPlaces>0.
 inputStyle | null | String | Inline style of the input element.
 inputStyleClass | null | String | Style class of the input element.
-maxValue | 10000000000000 | String | Maximum values allowed.
-minValue | -10000000000000 | String | Minimum value. Warning: If minValue is greater than 0, then you will effectively prevent your users to entirely delete the content of their input.
+maximumValue | 10000000000000 | String | Maximum values allowed.
+minimumValue | -10000000000000 | String | Minimum value. Warning: If minimumValue is greater than 0, then you will effectively prevent your users to entirely delete the content of their input.
 modifyValueOnWheel | true | Boolean | Allows the user to increment or decrement the element value with the mouse wheel.
 padControl | true | Boolean | Controls padding of the decimal places. If true, always pads the decimal with zeros.
 roundMethod | Round-Half-Up-Symmetric | String | Controls the rounding method.
@@ -159,7 +159,7 @@ Here are some examples demonstrating various cases;
 #### Maximum and minimum values (-1000.999 to 1000.000)
 
 ```xhtml
-<p:inputNumber id="input3" value="0.0" minValue="-1000.999" maxValue="1000" />
+<p:inputNumber id="input3" value="0.0" minimumValue="-1000.999" maximumValue="1000" />
 ```
 #### Custom decimal places
 

@@ -6671,8 +6671,8 @@ var AutoNumeric = /*#__PURE__*/function () {
      * Return TRUE if the given value (a number as a string) is within the range set in the settings `minimumValue` and `maximumValue`, FALSE otherwise.
      *
      * @param {string} value
-     * @param {object} parsedMinValue Parsed via the `parseStr()` function
-     * @param {object} parsedMaxValue Parsed via the `parseStr()` function
+     * @param {object} parsedMinimumValue Parsed via the `parseStr()` function
+     * @param {object} parsedMaximumValue Parsed via the `parseStr()` function
      * @returns {boolean}
      */
 
@@ -10401,9 +10401,9 @@ var AutoNumeric = /*#__PURE__*/function () {
     }
   }, {
     key: "_checkIfInRange",
-    value: function _checkIfInRange(value, parsedMinValue, parsedMaxValue) {
+    value: function _checkIfInRange(value, parsedMinimumValue, parsedMaximumValue) {
       var parsedValue = _AutoNumericHelper__WEBPACK_IMPORTED_MODULE_0__["default"].parseStr(value);
-      return _AutoNumericHelper__WEBPACK_IMPORTED_MODULE_0__["default"].testMinMax(parsedMinValue, parsedValue) > -1 && _AutoNumericHelper__WEBPACK_IMPORTED_MODULE_0__["default"].testMinMax(parsedMaxValue, parsedValue) < 1;
+      return _AutoNumericHelper__WEBPACK_IMPORTED_MODULE_0__["default"].testMinMax(parsedMinimumValue, parsedValue) > -1 && _AutoNumericHelper__WEBPACK_IMPORTED_MODULE_0__["default"].testMinMax(parsedMaximumValue, parsedValue) < 1;
     }
   }, {
     key: "_shouldSkipEventKey",

@@ -43,7 +43,7 @@ import org.primefaces.validate.bean.PositiveClientValidationConstraint;
 
 public class InputNumberRenderer extends InputRenderer {
 
-    // Default values for "minValue"/"maxValue" properties of the AutoNumeric Plugin
+    // Default values for "minimumValue"/"maximumValue" properties of the AutoNumeric Plugin
     private static final BigDecimal DEFAULT_MIN_VALUE = new BigDecimal("-10000000000000");
     private static final BigDecimal DEFAULT_MAX_VALUE = new BigDecimal("10000000000000");
 
@@ -73,23 +73,23 @@ public class InputNumberRenderer extends InputRenderer {
         try {
             if (LangUtils.isBlank(submittedValue)) {
                 Class<?> type = getTypeFromValueExpression(context, inputNumber);
-                if (type != null && type.isPrimitive() && LangUtils.isNotBlank(inputNumber.getMinValue())) {
-                    // avoid coercion of null or empty string to 0 which may be out of [minValue, maxValue] range
-                    submittedValue = String.valueOf(new BigDecimal(inputNumber.getMinValue()).doubleValue());
+                if (type != null && type.isPrimitive() && LangUtils.isNotBlank(inputNumber.getMinimumValue())) {
+                    // avoid coercion of null or empty string to 0 which may be out of [minimumValue, maximumValue] range
+                    submittedValue = String.valueOf(new BigDecimal(inputNumber.getMinimumValue()).doubleValue());
                 }
-                else if (type != null && type.isPrimitive() && LangUtils.isNotBlank(inputNumber.getMaxValue())) {
-                    // avoid coercion of null or empty string to 0 which may be out of [minValue, maxValue] range
-                    submittedValue = String.valueOf(new BigDecimal(inputNumber.getMaxValue()).doubleValue());
+                else if (type != null && type.isPrimitive() && LangUtils.isNotBlank(inputNumber.getMaximumValue())) {
+                    // avoid coercion of null or empty string to 0 which may be out of [minimumValue, maximumValue] range
+                    submittedValue = String.valueOf(new BigDecimal(inputNumber.getMaximumValue()).doubleValue());
                 }
             }
             else {
-                // Coerce submittedValue to (effective) range of [minValue, maxValue]
+                // Coerce submittedValue to (effective) range of [minimumValue, maximumValue]
                 BigDecimal value = new BigDecimal(submittedValue);
                 submittedValue = coerceValueInRange(value, inputNumber).toString();
             }
         }
         catch (NumberFormatException ex) {
-            throw new FacesException("Invalid number", ex);
+            throw new FacesException("inimumValid number", ex);
         }
 
         inputNumber.setSubmittedValue(submittedValue);
@@ -105,7 +105,7 @@ public class InputNumberRenderer extends InputRenderer {
             valueToRender = "";
         }
         else {
-            // Rendered value must always be inside the effective interval [minValue, maxValue],
+            // Rendered value must always be inside the effective interval [minimumValue, maximumValue],
             // or else AutoNumeric will throw an error and the component will be broken
             BigDecimal decimalToRender;
             try {
@@ -260,8 +260,8 @@ public class InputNumberRenderer extends InputRenderer {
      * @param inputNumber the InputNumber component
      * @return the minimumValue property as BigDecimal, or the AutoNumeric default value if empty
      */
-    private BigDecimal getEffectiveMinValue(InputNumber inputNumber) {
-        String minimumValue = inputNumber.getMinValue();
+    private BigDecimal getEffectiveMinimumValue(InputNumber inputNumber) {
+        String minimumValue = inputNumber.getMinimumValue();
         if (minimumValue == null) {
             return DEFAULT_MIN_VALUE;
         }
@@ -269,7 +269,7 @@ public class InputNumberRenderer extends InputRenderer {
             return new BigDecimal(minimumValue);
         }
         catch (Exception e) {
-            throw new IllegalArgumentException("Error converting  [" + minimumValue + "] to a decimal value for minValue", e);
+            throw new IllegalArgumentException("Error converting  [" + minimumValue + "] to a decimal value for minimumValue", e);
         }
     }
 
@@ -278,8 +278,8 @@ public class InputNumberRenderer extends InputRenderer {
      * @param inputNumber the InputNumber component
      * @return the maximumValue property as BigDecimal, or the AutoNumeric default value if empty
      */
-    private BigDecimal getEffectiveMaxValue(InputNumber inputNumber) {
-        String maximumValue = inputNumber.getMaxValue();
+    private BigDecimal getEffectiveMaximumValue(InputNumber inputNumber) {
+        String maximumValue = inputNumber.getMaximumValue();
         if (maximumValue == null) {
             return DEFAULT_MAX_VALUE;
         }
@@ -287,33 +287,33 @@ public class InputNumberRenderer extends InputRenderer {
             return new BigDecimal(maximumValue);
         }
         catch (Exception e) {
-            throw new IllegalArgumentException("Error converting  [" + maximumValue + "] to a decimal value for maxValue", e);
+            throw new IllegalArgumentException("Error converting  [" + maximumValue + "] to a decimal value for maximumValue", e);
         }
     }
 
     /**
      * Coerce the provided value to the range defined by the effective minimum and maximum numbers.
      * @param value the value to render
-     * @param inputNumber the component for which the minValue and maxValue properties define the range
+     * @param inputNumber the component for which the minimumValue and maximumValue properties define the range
      * @return the value if inside the range, or else the nearest boundary that is still inside the range
      */
     private BigDecimal coerceValueInRange(BigDecimal value, InputNumber inputNumber) {
-        return coerceValueInRange(value, getEffectiveMinValue(inputNumber), getEffectiveMaxValue(inputNumber));
+        return coerceValueInRange(value, getEffectiveMinimumValue(inputNumber), getEffectiveMaximumValue(inputNumber));
     }
 
     /**
      * Coerce the provided value to the range defined by the effective minimum and maximum numbers.
      * @param value the value to render
-     * @param effectiveMinValue the effective minimum value
-     * @param effectiveMaxValue the effective maximum number
+     * @param effectiveMinimumValue the effective minimum value
+     * @param effectiveMaximumValue the effective maximum number
      * @return the value if inside the range, or else the nearest boundary that is still inside the range
      */
-    private BigDecimal coerceValueInRange(BigDecimal value, BigDecimal effectiveMinValue, BigDecimal effectiveMaxValue) {
-        if (value.compareTo(effectiveMinValue) < 0) {
-            return effectiveMinValue;
+    private BigDecimal coerceValueInRange(BigDecimal value, BigDecimal effectiveMinimumValue, BigDecimal effectiveMaximumValue) {
+        if (value.compareTo(effectiveMinimumValue) < 0) {
+            return effectiveMinimumValue;
         }
-        if (value.compareTo(effectiveMaxValue) > 0) {
-            return effectiveMaxValue;
+        if (value.compareTo(effectiveMaximumValue) > 0) {
+            return effectiveMaximumValue;
         }
         return value;
     }
@@ -337,7 +337,7 @@ public class InputNumberRenderer extends InputRenderer {
     }
 
     /**
-     * Format a BigDecimal value as value/minValue/maxValue for the AutoNumeric plugin.
+     * Format a BigDecimal value as value/minimumValue/maximumValue for the AutoNumeric plugin.
      * @param valueToRender the value to render
      * @return BigDecimal value as plain decimal String, without any exponential notation
      */
@@ -371,7 +371,7 @@ public class InputNumberRenderer extends InputRenderer {
      * @return the minimum value of the component
      */
     private String getMinimum(boolean isIntegral, InputNumber inputNumber) {
-        String minimum = inputNumber.getMinValue();
+        String minimum = inputNumber.getMinimumValue();
         if (isIntegral && PositiveClientValidationConstraint.MIN_VALUE.equals(minimum)) {
             minimum = "0";
         }
@@ -385,7 +385,7 @@ public class InputNumberRenderer extends InputRenderer {
      * @return the maximum value of the component
      */
     private String getMaximum(boolean isIntegral, InputNumber inputNumber) {
-        String maximum = inputNumber.getMaxValue();
+        String maximum = inputNumber.getMaximumValue();
         if (isIntegral && NegativeClientValidationConstraint.MAX_VALUE.equals(maximum)) {
             maximum = "0";
         }

@@ -42,8 +42,8 @@ public abstract class InputNumberBase extends AbstractPrimeHtmlInputText impleme
         symbol,
         symbolPosition,
         signPosition,
-        minValue,
-        maxValue,
+        minimumValue,
+        maximumValue,
         roundMethod,
         decimalPlaces,
         decimalSeparator,
@@ -116,20 +116,20 @@ public abstract class InputNumberBase extends AbstractPrimeHtmlInputText impleme
         getStateHelper().put(PropertyKeys.symbolPosition, symbolPosition);
     }
 
-    public String getMinValue() {
-        return (String) getStateHelper().eval(PropertyKeys.minValue, null);
+    public String getMinimumValue() {
+        return (String) getStateHelper().eval(PropertyKeys.minimumValue, null);
     }
 
-    public void setMinValue(String minValue) {
-        getStateHelper().put(PropertyKeys.minValue, minValue);
+    public void setMinimumValue(String minimumValue) {
+        getStateHelper().put(PropertyKeys.minimumValue, minimumValue);
     }
 
-    public String getMaxValue() {
-        return (String) getStateHelper().eval(PropertyKeys.maxValue, null);
+    public String getMaximumValue() {
+        return (String) getStateHelper().eval(PropertyKeys.maximumValue, null);
     }
 
-    public void setMaxValue(String maxValue) {
-        getStateHelper().put(PropertyKeys.maxValue, maxValue);
+    public void setMaximumValue(String maximumValue) {
+        getStateHelper().put(PropertyKeys.maximumValue, maximumValue);
     }
 
     public String getRoundMethod() {

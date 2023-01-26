@@ -33,7 +33,9 @@ import javax.inject.Named;
 @ViewScoped
 public class InputNumberView implements Serializable {
 
-    private Double input1 = Double.valueOf(0);
+    private Double input1;
+
+    private Integer input1x;
     private Double input2 = Double.valueOf(0);
     private Double input3 = Double.valueOf(0);
     private Double input4 = Double.valueOf(0);
@@ -45,6 +47,7 @@ public class InputNumberView implements Serializable {
 
     public InputNumberView() {
         input1 = 0d;
+        input1x = 0;
         input2 = 0d;
         input3 = 0d;
         input4 = 0d;
@@ -60,6 +63,14 @@ public class InputNumberView implements Serializable {
 
     public void setInput1(Double input1) {
         this.input1 = input1;
+    }
+
+    public Integer getInput1x() {
+        return input1x;
+    }
+
+    public void setInput1x(Integer input1x) {
+        this.input1x = input1x;
     }
 
     public Double getInput2() {

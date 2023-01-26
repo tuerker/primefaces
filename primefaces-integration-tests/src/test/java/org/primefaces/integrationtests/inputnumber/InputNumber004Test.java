@@ -179,12 +179,12 @@ public class InputNumber004Test extends AbstractPrimePageTest {
         }
     }
 
-    private void assertConfiguration(JSONObject cfg, String decimalPlaces, String minValue, String maxValue) {
+    private void assertConfiguration(JSONObject cfg, String decimalPlaces, String minimumValue, String maximumValue) {
         assertNoJavascriptErrors();
         System.out.println("InputNumber Config = " + cfg);
         Assertions.assertEquals(decimalPlaces, cfg.get("decimalPlaces"));
-        Assertions.assertEquals(minValue, cfg.get("minimumValue"));
-        Assertions.assertEquals(maxValue, cfg.get("maximumValue"));
+        Assertions.assertEquals(minimumValue, cfg.get("minimumValue"));
+        Assertions.assertEquals(maximumValue, cfg.get("maximumValue"));
     }
 
     public static class Page extends AbstractPrimePage {

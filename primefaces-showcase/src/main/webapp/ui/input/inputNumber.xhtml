@@ -20,24 +20,33 @@
         <div class="card">
             <h:form>
                 <div class="ui-fluid formgrid grid">
-                    <div class="field col-12 md:col-4">
-                        <p:outputLabel for="input1" value="No Configuration"/>
-                        <p:inputNumber id="input1" value="#{inputNumberView.input1}" modifyValueOnWheel="false" />
-                    </div>
+                  <div class="field col-12 md:col-4">
+                    <p:outputLabel for="input1" value="No Configuration"/>
+                    <p:inputNumber id="input1" value="#{inputNumberView.input1}" modifyValueOnWheel="false" />
+                  </div>
 
-                    <div class="field col-12 md:col-4">
+                  <div class="field col-12 md:col-4">
+                    <p:outputLabel for="input1b" value="With minimumValue=-1000.999 maximumValue=1000"/>
+                    <p:inputNumber id="input1b" value="#{inputNumberView.input1}" modifyValueOnWheel="false" minimumValue="-1000.999" maximumValue="1000" />
+                  </div>
+
+                  <div class="field col-12 md:col-4">
+                    <p:outputLabel for="input1x" value="Integer"/>
+                    <p:inputNumber id="input1x" value="#{inputNumberView.input1x}" modifyValueOnWheel="false" />
+                  </div>
+
+                  <div class="field col-12 md:col-4">
+                    <p:outputLabel for="input1xb" value="Integer with minimumValue=-1000.999 maximumValue=1000"/>
+                    <p:inputNumber id="input1xb" value="#{inputNumberView.input1x}" modifyValueOnWheel="false" minimumValue="-1000.999" maximumValue="1000" />
+                  </div>
+
+                  <div class="field col-12 md:col-4">
                         <p:outputLabel for="input2" value="Currency"/>
                         <p:inputNumber id="input2" value="#{inputNumberView.input2}" symbol=" CHF"
                                         symbolPosition="s" decimalSeparator="," thousandSeparator="." />
                     </div>
 
-                    <div class="field col-12 md:col-4">
-                        <p:outputLabel for="input3" value="Min-Max"/>
-                        <p:inputNumber id="input3" value="#{inputNumberView.input3}" minValue="-1000.999"
-                                        maxValue="1000" decimalPlaces="3" />
-                    </div>
-
-                    <div class="field col-12 md:col-4">
+                  <div class="field col-12 md:col-4">
                         <p:outputLabel for="input4" value="Custom Decimals"/>
                         <p:inputNumber id="input4" value="#{inputNumberView.input4}" decimalPlaces="6" />
                     </div>
@@ -67,7 +76,7 @@
 
                     <div class="field col-12 md:col-4">
                         <p:outputLabel for="input9" value="Positive"/>
-                        <p:inputNumber id="input9" value="#{inputNumberView.input9}" minValue="1" decimalPlaces="0" />
+                        <p:inputNumber id="input9" value="#{inputNumberView.input9}" minimumValue="1" decimalPlaces="0" />
                     </div>
                 </div>
             </h:form>

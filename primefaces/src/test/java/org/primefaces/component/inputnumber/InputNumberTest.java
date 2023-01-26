@@ -77,7 +77,7 @@ public class InputNumberTest {
         renderer = null;
     }
 
-    private void setupValues(String submittedValue, boolean disabled, String minValue, String maxValue, boolean primitiveValueBinding) {
+    private void setupValues(String submittedValue, boolean disabled, String minimumValue, String maximumValue, boolean primitiveValueBinding) {
         Map<String, String> requestParams = new HashMap<>();
         requestParams.put("_hinput", submittedValue);
         when(externalContext.getRequestParameterMap()).thenReturn(requestParams);
@@ -87,8 +87,8 @@ public class InputNumberTest {
         when(inputNumber.getAttributes()).thenReturn(attributes);
         when(inputNumber.isDisabled()).thenReturn(disabled);
         when(inputNumber.isReadonly()).thenReturn(disabled);
-        when(inputNumber.getMinValue()).thenReturn(minValue);
-        when(inputNumber.getMaxValue()).thenReturn(maxValue);
+        when(inputNumber.getMinimumValue()).thenReturn(minimumValue);
+        when(inputNumber.getMaximumValue()).thenReturn(maximumValue);
         valueExpression = mock(ValueExpression.class);
         when(inputNumber.getValueExpression(anyString())).thenReturn(valueExpression);
         if (primitiveValueBinding) {
@@ -154,7 +154,7 @@ public class InputNumberTest {
     }
 
     @Test
-    public void testDecodeInvalidNumber() {
+    public void testDecodeinimumValidNumber() {
         setupValues("crash", false, null, null, false);
 
         // Act
@@ -163,7 +163,7 @@ public class InputNumberTest {
         });
 
         // Assert (expected exception)
-        assertEquals("Invalid number", thrown.getMessage());
+        assertEquals("inimumValid number", thrown.getMessage());
 
     }
 
@@ -183,7 +183,7 @@ public class InputNumberTest {
     }
 
     @Test
-    public void testDecodeEmptyPrimitiveWithoutMinValue() {
+    public void testDecodeEmptyPrimitiveWithoutMinimumValue() {
         setupValues("", false, null, "10.0", true);
         renderer.decode(context, inputNumber);
         double submittedValue = Double.parseDouble(inputNumber.getSubmittedValue().toString());

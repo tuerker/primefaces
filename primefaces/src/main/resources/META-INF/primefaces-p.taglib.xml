@@ -13478,9 +13478,9 @@
         </attribute>
         <attribute>
             <description>
-                <![CDATA[Minimum value. Warning: If minValue is greater than 0, then you will effectively prevent your users to entirely delete the content of their input. Default is -10000000000000.]]>
+                <![CDATA[Minimum value. Warning: If minimumValue is greater than 0, then you will effectively prevent your users to entirely delete the content of their input. Default is -10000000000000.]]>
             </description>
-            <name>minValue</name>
+            <name>minimumValue</name>
             <required>false</required>
             <type>java.lang.String</type>
         </attribute>
@@ -13488,7 +13488,7 @@
             <description>
                 <![CDATA[Maximum values. Default is 10000000000000.]]>
             </description>
-            <name>maxValue</name>
+            <name>maximumValue</name>
             <required>false</required>
             <type>java.lang.String</type>
         </attribute>

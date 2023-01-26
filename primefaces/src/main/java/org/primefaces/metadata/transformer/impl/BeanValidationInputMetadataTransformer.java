@@ -127,37 +127,37 @@ public class BeanValidationInputMetadataTransformer extends AbstractInputMetadat
         if (input instanceof InputNumber) {
             InputNumber inputNumber = (InputNumber) input;
 
-            if (LangUtils.isBlank(inputNumber.getMaxValue())) {
+            if (LangUtils.isBlank(inputNumber.getMaximumValue())) {
                 if (annotationType.equals(Max.class)) {
                     Max max = (Max) constraint;
-                    inputNumber.setMaxValue(String.valueOf(max.value()));
+                    inputNumber.setMaximumValue(String.valueOf(max.value()));
                 }
                 if (annotationType.equals(DecimalMax.class)) {
                     DecimalMax max = (DecimalMax) constraint;
-                    inputNumber.setMaxValue(max.value());
+                    inputNumber.setMaximumValue(max.value());
                 }
                 if (annotationClassName.equals(NegativeClientValidationConstraint.CONSTRAINT_ID)) {
-                    inputNumber.setMaxValue(NegativeClientValidationConstraint.MAX_VALUE);
+                    inputNumber.setMaximumValue(NegativeClientValidationConstraint.MAX_VALUE);
                 }
                 if (annotationClassName.equals(NegativeOrZeroClientValidationConstraint.CONSTRAINT_ID)) {
-                    inputNumber.setMaxValue(NegativeOrZeroClientValidationConstraint.MAX_VALUE);
+                    inputNumber.setMaximumValue(NegativeOrZeroClientValidationConstraint.MAX_VALUE);
                 }
             }
 
-            if (LangUtils.isBlank(inputNumber.getMinValue())) {
+            if (LangUtils.isBlank(inputNumber.getMinimumValue())) {
                 if (annotationType.equals(Min.class)) {
                     Min min = (Min) constraint;
-                    inputNumber.setMinValue(String.valueOf(min.value()));
+                    inputNumber.setMinimumValue(String.valueOf(min.value()));
                 }
                 if (annotationType.equals(DecimalMin.class)) {
                     DecimalMin min = (DecimalMin) constraint;
-                    inputNumber.setMinValue(min.value());
+                    inputNumber.setMinimumValue(min.value());
                 }
                 if (annotationClassName.equals(PositiveClientValidationConstraint.CONSTRAINT_ID)) {
-                    inputNumber.setMinValue(PositiveClientValidationConstraint.MIN_VALUE);
+                    inputNumber.setMinimumValue(PositiveClientValidationConstraint.MIN_VALUE);
                 }
                 if (annotationClassName.equals(PositiveOrZeroClientValidationConstraint.CONSTRAINT_ID)) {
-                    inputNumber.setMinValue(PositiveOrZeroClientValidationConstraint.MIN_VALUE);
+                    inputNumber.setMinimumValue(PositiveOrZeroClientValidationConstraint.MIN_VALUE);
                 }
             }
 
