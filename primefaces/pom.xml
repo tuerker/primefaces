@@ -19,12 +19,14 @@
     <properties>
         <cyclonedx.skip>true</cyclonedx.skip>
         <resources.dir.compressed>${project.build.directory}/classes/META-INF/resources/primefaces</resources.dir.compressed>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <sonar.sources>src/main/java,src/main/resources</sonar.sources>
         <node.version>v22.21.1</node.version>
         <yarn.version>v1.22.22</yarn.version>
         <frontend.directory>${basedir}/src/main/frontend</frontend.directory>
         <frontend.node.env>development</frontend.node.env>
+        <!-- -Dskip.yarn=true skips the frontend build (frontend-maven-plugin) and the tokens zip, which needs its output -->
+        <skip.yarn>false</skip.yarn>
         <sonar.skip>false</sonar.skip>
         <vdl.skip>true</vdl.skip>
     </properties>
@@ -417,7 +419,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>parse-version</id>
@@ -430,7 +432,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>6.1.2</version>
+                <version>6.2.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <supportedProjectTypes>
@@ -613,6 +615,28 @@
                 </executions>
             </plugin>
 
+            <!-- Design tokens of the themes (W3C DTCG, written by the frontend build to target/tokens) as primefaces-<version>-tokens.zip -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.8.0</version>
+                <executions>
+                    <execution>
+                        <id>tokens</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <skipAssembly>${skip.yarn}</skipAssembly>
+                            <descriptors>
+                                <descriptor>src/main/assembly/tokens.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -697,7 +721,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>xml-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <version>1.2.2</version>
                 <executions>
                     <execution>
                         <id>minify-xml</id>

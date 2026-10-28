@@ -23,6 +23,7 @@
  */
 package org.primefaces.component.toggleswitch;
 
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.renderkit.InputRenderer;
 import org.primefaces.util.ComponentUtils;
 import org.primefaces.util.HTML;
@@ -36,6 +37,7 @@ import jakarta.faces.context.ResponseWriter;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = ToggleSwitch.DEFAULT_RENDERER, componentFamily = ToggleSwitch.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class ToggleSwitchRenderer extends InputRenderer<ToggleSwitch> {
 
     @Override
@@ -126,7 +128,7 @@ public class ToggleSwitchRenderer extends InputRenderer<ToggleSwitch> {
         String ariaLabel = component.getAriaLabel() != null ? component.getAriaLabel() : component.getLabel();
 
         writer.startElement("div", component);
-        writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
+        writer.writeAttribute("class", "p-hidden-accessible", null);
 
         writer.startElement("input", null);
         writer.writeAttribute("id", inputId, "id");
@@ -153,7 +155,9 @@ public class ToggleSwitchRenderer extends InputRenderer<ToggleSwitch> {
 
     protected void encodeScript(FacesContext context, ToggleSwitch component) throws IOException {
         WidgetBuilder wb = getWidgetBuilder(context);
-        wb.init("ToggleSwitch", component).finish();
+        wb.init("ToggleSwitch", component)
+                .callback("confirmation", "function()", component.getConfirmationScript())
+                .finish();
     }
 
     protected boolean isChecked(String value) {

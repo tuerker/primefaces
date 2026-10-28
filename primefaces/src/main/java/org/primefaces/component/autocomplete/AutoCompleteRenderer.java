@@ -23,6 +23,7 @@
  */
 package org.primefaces.component.autocomplete;
 
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.component.column.Column;
 import org.primefaces.event.AutoCompleteEvent;
 import org.primefaces.expression.SearchExpressionUtils;
@@ -51,6 +52,7 @@ import jakarta.faces.event.PhaseId;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = AutoComplete.DEFAULT_RENDERER, componentFamily = AutoComplete.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class AutoCompleteRenderer extends InputRenderer<AutoComplete> {
 
     @Override
@@ -83,12 +85,20 @@ public class AutoCompleteRenderer extends InputRenderer<AutoComplete> {
     protected void decodeSingle(FacesContext context, AutoComplete ac) {
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String clientId = ac.getClientId(context);
-        String valueParam = (ac.getVar() != null) ? clientId + "_hinput" : clientId + "_input";
+        String valueParam = isHiddenInputSubmitted(ac) ? clientId + "_hinput" : clientId + "_input";
         String submittedValue = params.get(valueParam);
 
         if (submittedValue != null) {
             ac.setSubmittedValue(submittedValue);
         }
+    }
+
+    /**
+     * Single mode submits the hidden input instead of the visible one for POJOs, and with forceSelection,
+     * where the hidden input only ever holds validated values (#15304).
+     */
+    protected boolean isHiddenInputSubmitted(AutoComplete ac) {
+        return ac.getVar() != null || ac.isForceSelection();
     }
 
     protected void decodeMultiple(FacesContext context, AutoComplete ac) {
@@ -181,7 +191,7 @@ public class AutoCompleteRenderer extends InputRenderer<AutoComplete> {
 
         encodeInput(context, component, clientId);
 
-        if (component.getVar() != null) {
+        if (isHiddenInputSubmitted(component)) {
             encodeHiddenInput(context, component, clientId);
         }
 
@@ -290,7 +300,7 @@ public class AutoCompleteRenderer extends InputRenderer<AutoComplete> {
         writer.writeAttribute("id", id, null);
         writer.writeAttribute("name", id, null);
         writer.writeAttribute("multiple", "multiple", null);
-        writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
+        writer.writeAttribute("class", "p-hidden-accessible", null);
         writer.writeAttribute("tabindex", "-1", null);
         writer.writeAttribute(HTML.ARIA_HIDDEN, "true", null);
 
@@ -890,12 +900,13 @@ public class AutoCompleteRenderer extends InputRenderer<AutoComplete> {
 
         if (colSize > 0) {
             writer.startElement("tr", null);
+            writer.writeAttribute("id", component.getClientId(context) + "_moretext", null);
             writer.writeAttribute("class", AutoComplete.MORE_TEXT_TABLE_CLASS, null);
+            writer.writeAttribute(HTML.ARIA_LABEL, moreText, null);
+            writer.writeAttribute("data-item-label", moreText, null);
 
             writer.startElement("td", null);
             writer.writeAttribute("colspan", colSize, null);
-            writer.writeAttribute(HTML.ARIA_LABEL, moreText, null);
-            writer.writeAttribute("data-item-label", moreText, null);
             writer.writeText(moreText, "moreText");
             writer.endElement("td");
 

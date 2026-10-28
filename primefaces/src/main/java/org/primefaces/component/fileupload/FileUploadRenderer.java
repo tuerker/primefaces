@@ -23,6 +23,7 @@
  */
 package org.primefaces.component.fileupload;
 
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.context.PrimeApplicationContext;
 import org.primefaces.expression.SearchExpressionUtils;
 import org.primefaces.renderkit.CoreRenderer;
@@ -41,6 +42,7 @@ import jakarta.faces.convert.ConverterException;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = FileUpload.DEFAULT_RENDERER, componentFamily = FileUpload.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class FileUploadRenderer extends CoreRenderer<FileUpload> {
 
     @Override
@@ -216,22 +218,32 @@ public class FileUploadRenderer extends CoreRenderer<FileUpload> {
         String label = component.getLabel();
 
         if (component.isSkinSimple()) {
-            styleClass = (styleClass == null) ? FileUpload.CONTAINER_CLASS_SIMPLE : FileUpload.CONTAINER_CLASS_SIMPLE + " " + styleClass;
-            styleClass = isValueBlank(label) ? FileUpload.BUTTON_ICON_ONLY + " " + styleClass : styleClass;
-            String buttonClass = HTML.BUTTON_TEXT_ICON_LEFT_BUTTON_CLASS;
-            if (component.isDisabled()) {
-                buttonClass += " ui-state-disabled";
-            }
+            String containerClass = getStyleClassBuilder(context)
+                    .add(FileUpload.CONTAINER_CLASS_SIMPLE)
+                    .add(styleClass)
+                    .add(isValueBlank(label), FileUpload.BUTTON_ICON_ONLY)
+                    .build();
+
+            String buttonClass = getStyleClassBuilder(context)
+                    .add(HTML.BUTTON_TEXT_ICON_LEFT_BUTTON_CLASS)
+                    .add(component.getChooseButtonStyleClass())
+                    .add(component.isDisabled(), "ui-state-disabled")
+                    .build();
 
             writer.startElement("span", component);
             writer.writeAttribute("id", clientId, "id");
-            writer.writeAttribute("class", styleClass, "styleClass");
+            writer.writeAttribute("class", containerClass, "styleClass");
             if (style != null) {
                 writer.writeAttribute("style", style, "style");
             }
 
             writer.startElement("span", null);
             writer.writeAttribute("class", buttonClass, null);
+
+            String chooseButtonTitle = component.getChooseButtonTitle();
+            if (chooseButtonTitle != null) {
+                writer.writeAttribute("title", chooseButtonTitle, null);
+            }
 
             //button icon
             writer.startElement("span", null);

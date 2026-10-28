@@ -23,6 +23,7 @@
  */
 package org.primefaces.component.ajaxexceptionhandler;
 
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.expression.SearchExpressionUtils;
 import org.primefaces.renderkit.CoreRenderer;
 import org.primefaces.util.WidgetBuilder;
@@ -34,6 +35,7 @@ import jakarta.faces.context.ResponseWriter;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = AjaxExceptionHandler.DEFAULT_RENDERER, componentFamily = AjaxExceptionHandler.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class AjaxExceptionHandlerRenderer extends CoreRenderer<AjaxExceptionHandler> {
 
     @Override
@@ -47,7 +49,7 @@ public class AjaxExceptionHandlerRenderer extends CoreRenderer<AjaxExceptionHand
         wb.init("AjaxExceptionHandler", component);
         wb.attr("exceptionType", component.getType())
                 .attr("update", SearchExpressionUtils.resolveClientIdsForClientSide(context, component, component.getUpdate()))
-                .callback("onexception", "function(errorName, errorMessage)", component.getOnexception());
+                .callback("onexception", "function(type, message, timestamp)", component.getOnexception());
 
         wb.finish();
     }

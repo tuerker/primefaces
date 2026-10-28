@@ -128,6 +128,24 @@ PrimeFaces.widget.Carousel = class Carousel extends PrimeFaces.widget.DeferredWi
     }
 
     /**
+     * @override
+     * @inheritdoc
+     */
+    destroy() {
+        super.destroy();
+
+        this.stopAutoplay();
+        if (this.documentResizeListener) {
+            $(window).off('resize', this.documentResizeListener);
+            this.documentResizeListener = null;
+        }
+        if (this.carouselStyle) {
+            this.carouselStyle.remove();
+            this.carouselStyle = null;
+        }
+    }
+
+    /**
      * Renders ARIA labels for the carousel navigation elements.
      * @private
      */
@@ -631,6 +649,7 @@ PrimeFaces.widget.Carousel = class Carousel extends PrimeFaces.widget.DeferredWi
     styleClone(element, index, length) {
         element.removeClass('ui-carousel-item-start ui-carousel-item-end');
         element.addClass('ui-carousel-item-cloned ui-carousel-item-active');
+        element.prop('inert', true);
         if (index === 0) {
             element.addClass('ui-carousel-item-start');
         }
@@ -652,6 +671,7 @@ PrimeFaces.widget.Carousel = class Carousel extends PrimeFaces.widget.DeferredWi
             lastIndex = this.lastIndex();
 
         for (var i = 0; i < items.length; i++) {
+            items.eq(i).prop('inert', i < firstIndex || i > lastIndex);
             if (firstIndex <= i && lastIndex >= i) {
                 items.eq(i).addClass('ui-carousel-item-active');
             }

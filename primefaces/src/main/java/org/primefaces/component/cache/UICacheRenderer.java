@@ -24,6 +24,7 @@
 package org.primefaces.component.cache;
 
 import org.primefaces.cache.CacheProvider;
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.context.PrimeApplicationContext;
 import org.primefaces.context.PrimeRequestContext;
 import org.primefaces.renderkit.CoreRenderer;
@@ -38,6 +39,7 @@ import jakarta.faces.context.ResponseWriter;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = UICache.DEFAULT_RENDERER, componentFamily = UICache.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class UICacheRenderer extends CoreRenderer<UICache> {
 
     private static final Logger LOGGER = Logger.getLogger(UICacheRenderer.class.getName());
@@ -47,7 +49,7 @@ public class UICacheRenderer extends CoreRenderer<UICache> {
         if (!component.isDisabled()) {
             // print exception in development stage
             if (LOGGER.isLoggable(Level.WARNING)) {
-                boolean moveScriptsToBottom = PrimeRequestContext.getCurrentInstance().getApplicationContext().getConfig().isMoveScriptsToBottom();
+                boolean moveScriptsToBottom = PrimeRequestContext.getCurrentInstance(context).getApplicationContext().getConfig().isMoveScriptsToBottom();
                 if (moveScriptsToBottom) {
                     logDevelopmentWarning(context, this,
                             "Using p:cache in combination with PrimeFaces.MOVE_SCRIPTS_TO_BOTTOM may cause Javascript code to stop working.");

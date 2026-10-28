@@ -4,7 +4,7 @@
  * You can access this configuration via {@link ConfirmPopup.cfg | cfg}. Please note that this
  * configuration is usually meant to be read-only and should not be modified.
  */
-export interface ConfirmPopupCfg extends PrimeType.widget.DynamicOverlayWidgetCfg {
+export interface ConfirmPopupCfg extends PrimeFacesTypes.widget.DynamicOverlayWidgetCfg {
     /**
      * The search expression for the element to which the overlay panel should be
      * appended.
@@ -51,7 +51,7 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
     /**
      * Unbind callback for the hide overlay handler.
      */
-    hideOverlayHandler?: PrimeType.Unbindable;
+    hideOverlayHandler?: PrimeFacesTypes.Unbindable;
 
     /**
      * The DOM element for the message icon.
@@ -71,24 +71,24 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
     /**
      * Unbind callback for the resize handler.
      */
-    resizeHandler?: PrimeType.Unbindable;
+    resizeHandler?: PrimeFacesTypes.Unbindable;
 
     /**
      * Unbind callback for the scroll handler.
      */
-    scrollHandler?: PrimeType.Unbindable;
+    scrollHandler?: PrimeFacesTypes.Unbindable;
 
     /**
      * Handler for CSS transitions used by this widget.
      */
-    transition?: PrimeType.CssTransitionHandler | null = null;
+    transition?: PrimeFacesTypes.CssTransitionHandler | null = null;
 
     /**
      * DOM element of the Yes button.
      */
     yesButton: JQuery = $();
 
-    override init(cfg: PrimeType.widget.PartialWidgetCfg<Cfg>): void {
+    override init(cfg: PrimeFacesTypes.widget.PartialWidgetCfg<Cfg>): void {
         cfg.dismissable = cfg.dismissable !== false;
         if (!cfg.appendTo && cfg.global) {
             cfg.appendTo = '@(body)';
@@ -133,37 +133,41 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
                     const js = source.data('pfconfirmcommand');
                     const command = id ? $(id) : $();
 
-                    // Test if the function matches the pattern
-                    if (PrimeFaces.ajax.Utils.isAjaxRequest(js) || command.is('a')) {
-                        // command is ajax=true
-                        var originalOnClick;
-
-                        if (source[0]) {
-                            // @ts-expect-error Internal JQuery method
-                            // TODO Do we really need to use JQuery internals?
-                            const events = $._data(source[0], "events");
-                            originalOnClick = source.prop('onclick') || (events && events.click ? events.click[0].handler : null);
-                        }
-
-                        // Temporarily remove the click handler and execute the new one
-                        source.prop('onclick', null).off("click").on("click", function (event) {
-                            PrimeFaces.csp.executeEvent(id ?? document.createElement("div"), js, event);
-                        }).trigger("click");
-
-                        // Restore the original click handler if it exists
-                        if (originalOnClick) {
-                            source.off("click").on("click", originalOnClick);
-                        }
+                    if (typeof js === 'function') {
+                        js.call(id);
                     }
-                    else {
-                        // command is ajax=false
-                        if (command.prop('onclick')) {
-                            command.removeAttr("onclick");
+                    else if (typeof js === 'string') {
+                        if (PrimeFaces.ajax.Utils.isAjaxRequest(js) || command.is('a')) {
+                            // command is ajax=true
+                            var originalOnClick;
+
+                            if (source[0]) {
+                                // @ts-expect-error Internal JQuery method
+                                // TODO Do we really need to use JQuery internals?
+                                const events = $._data(source[0], "events");
+                                originalOnClick = source.prop('onclick') || (events && events.click ? events.click[0].handler : null);
+                            }
+
+                            // Temporarily remove the click handler and execute the new one
+                            source.prop('onclick', null).off("click").on("click", function (event) {
+                                PrimeFaces.csp.executeEvent(id ?? document.createElement("div"), js, event);
+                            }).trigger("click");
+
+                            // Restore the original click handler if it exists
+                            if (originalOnClick) {
+                                source.off("click").on("click", originalOnClick);
+                            }
                         }
                         else {
-                            command.off("click");
+                            // command is ajax=false
+                            if (command.prop('onclick')) {
+                                command.removeAttr("onclick");
+                            }
+                            else {
+                                command.off("click");
+                            }
+                            command.removeAttr("data-pfconfirmcommand").trigger("click");
                         }
-                        command.removeAttr("data-pfconfirmcommand").trigger("click");
                     }
 
                     PrimeFaces.confirmPopup?.hide();
@@ -253,7 +257,7 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
      * Hides the popup.
      * @param callback Callback that is invoked after this popup was closed.
      */
-    hide(callback?: PrimeType.widget.ConfirmPopup.HideCallback): void {
+    hide(callback?: PrimeFacesTypes.widget.ConfirmPopup.HideCallback): void {
         if (this.transition) {
             this.transition.hide({
                 onExit: () => {
@@ -312,12 +316,12 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
 
             this.jq.removeClass('ui-confirm-popup-flipped');
 
-            this.jq.css({ left: '0px', top: '0px', 'transform-origin': 'center top' }).position({
+            PrimeFaces.utils.position(this.jq.css({ left: '0px', top: '0px', 'transform-origin': 'center top' }), {
                 my: 'left top',
                 at: 'left bottom',
                 of: target,
                 collision: 'flipfit',
-                using: function (pos: { top: number; left: number }, directions: { horizontal: number; vertical: number }) {
+                using: function (pos: { top: number; left: number }, directions: PrimeFacesTypes.utils.PositionFeedback) {
                     const targetOffset = target.offset() ?? { top: 0, left:0 };
                     let arrowLeft = 0;
 
@@ -369,7 +373,7 @@ export class ConfirmPopup<Cfg extends ConfirmPopupCfg = ConfirmPopupCfg> extends
      * Shows the given message in this confirmation popup.
      * @param msg Message to show.
      */
-    showMessage(msg: Partial<PrimeType.hook.confirm.ExtendedConfirmMessage>): void {
+    showMessage(msg: Partial<PrimeFacesTypes.hook.confirm.ExtendedConfirmMessage>): void {
         PrimeFaces.confirmPopupSource = typeof msg.source === 'string' ? $(PrimeFaces.escapeClientId(msg.source)) : PrimeFaces.utils.toJQuery(msg.source);
 
         const beforeShow = () => {

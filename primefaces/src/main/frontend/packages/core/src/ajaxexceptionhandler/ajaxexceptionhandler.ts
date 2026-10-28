@@ -19,7 +19,7 @@ export interface AjaxExceptionHandlerCfg extends BaseWidgetCfg {
     /**
      * Callback to invoke when an AJAX request fails.
      */
-    onexception: PrimeType.widget.AjaxExceptionHandler.OnExceptionCallback;
+    onexception: PrimeFacesTypes.widget.AjaxExceptionHandler.OnExceptionCallback;
 }
 
 /**
@@ -29,7 +29,7 @@ export interface AjaxExceptionHandlerCfg extends BaseWidgetCfg {
  * JavaScript callback and/or updates Faces components when an error occurs.
  */
 export class AjaxExceptionHandler<Cfg extends AjaxExceptionHandlerCfg = AjaxExceptionHandlerCfg> extends BaseWidget<AjaxExceptionHandlerCfg> {
-    override init(cfg: PrimeType.widget.PartialWidgetCfg<Cfg>): void {
+    override init(cfg: PrimeFacesTypes.widget.PartialWidgetCfg<Cfg>): void {
         super.init(cfg);
     }
 
@@ -53,24 +53,40 @@ export class AjaxExceptionHandler<Cfg extends AjaxExceptionHandlerCfg = AjaxExce
      * @param errorMessage The error message.
      */
     handle(errorName: string, errorMessage: string): void {
+        const timestamp = this.formatTimestamp(new Date());
+
         if (this.cfg.update) {
-            const options: PrimeType.ajax.Configuration = {
+            const options: PrimeFacesTypes.ajax.Configuration = {
                 source: this.getId(),
                 process: this.getId(),
                 update: this.cfg.update,
                 ignoreAutoUpdate: true,
                 global: false,
+                // errors of this request must not invoke this handler again, otherwise e.g. a connection error ends up in an endless loop
+                skipErrorHandling: true,
                 oncomplete: () => {
                     if (this.cfg.onexception) {
-                        this.cfg.onexception.call(this, errorName, errorMessage);
+                        this.cfg.onexception.call(this, errorName, errorMessage, timestamp);
                     }
                 }
             };
             ajax.Request.handle(options);
         }
         else if (this.cfg.onexception) {
-            this.cfg.onexception.call(this, errorName, errorMessage);
+            this.cfg.onexception.call(this, errorName, errorMessage, timestamp);
         }
+    }
+
+    /**
+     * Formats the passed date like the server side `p:ajaxExceptionHandler` (`yyyy-MM-dd HH:mm:ss`).
+     * @param date The date to format.
+     * @returns The formatted date.
+     */
+    formatTimestamp(date: Date): string {
+        const pad = (value: number): string => String(value).padStart(2, '0');
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} `
+            + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
     /**

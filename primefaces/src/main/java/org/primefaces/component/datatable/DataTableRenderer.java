@@ -23,6 +23,7 @@
  */
 package org.primefaces.component.datatable;
 
+import org.primefaces.cdk.api.FacesRendererInfo;
 import org.primefaces.component.api.DynamicColumn;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.celleditor.CellEditor;
@@ -68,6 +69,7 @@ import jakarta.faces.context.ResponseWriter;
 import jakarta.faces.render.FacesRenderer;
 
 @FacesRenderer(rendererType = DataTable.DEFAULT_RENDERER, componentFamily = DataTable.COMPONENT_FAMILY)
+@FacesRendererInfo
 public class DataTableRenderer extends DataRenderer<DataTable> {
 
     private static final Logger LOGGER = Logger.getLogger(DataTableRenderer.class.getName());
@@ -763,7 +765,7 @@ public class DataTableRenderer extends DataRenderer<DataTable> {
         String headerText = resolveColumnHeaderText(context, column);
         String titleStyleClass = getStyleClassBuilder(context)
                 .add(DataTable.COLUMN_TITLE_CLASS)
-                .add(isColumnAriaHeaderTextDefined(context, column), "ui-helper-hidden-accessible")
+                .add(isColumnAriaHeaderTextDefined(context, column), "p-hidden-accessible")
                 .build();
 
         writer.startElement("span", null);
@@ -1126,9 +1128,18 @@ public class DataTableRenderer extends DataRenderer<DataTable> {
         List<SummaryRow> summaryRows = table.getSummaryRows();
         HeaderRow headerRow = table.getHeaderRow();
 
-        SortMeta sort = table.getHighestPriorityActiveSortMeta();
-        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && sort != null;
-        boolean encodeSummaryRow = (!summaryRows.isEmpty() && sort != null);
+        // resolving the group only makes sense when there is something to group
+        SortMeta sort = (headerRow != null || !summaryRows.isEmpty()) ? table.getGroupByMeta() : null;
+        ValueExpression groupBy = sort != null ? sort.getSortBy() : null;
+
+        // a summaryRow may define the group itself, which is the only way to group without a headerRow
+        ValueExpression summaryGroupBy = resolveSummaryGroupBy(context, table, summaryRows);
+        if (summaryGroupBy == null) {
+            summaryGroupBy = groupBy;
+        }
+
+        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && groupBy != null;
+        boolean encodeSummaryRow = (!summaryRows.isEmpty() && summaryGroupBy != null);
 
         for (int i = first; i < last; i++) {
             table.setRowIndex(i);
@@ -1136,16 +1147,33 @@ public class DataTableRenderer extends DataRenderer<DataTable> {
                 break;
             }
 
-            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, sort.getSortBy(), false))) {
+            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, groupBy, false))) {
                 encodeHeaderRow(context, table, headerRow);
             }
 
             encodeRow(context, table, i, columnStart, columnEnd);
 
-            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, sort.getSortBy(), i == last - 1)) {
-                encodeSummaryRow(context, summaryRows, sort);
+            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, summaryGroupBy, i == last - 1)) {
+                encodeSummaryRow(context, summaryRows, summaryGroupBy);
             }
         }
+    }
+
+    /**
+     * Resolves the group defined by the summary rows themselves, the first one declaring a group wins.
+     * All summary rows share this one group, distinct groups per summary row are not supported.
+     *
+     * @return the group by {@link ValueExpression} or <code>null</code> when no summary row defines a group
+     */
+    protected ValueExpression resolveSummaryGroupBy(FacesContext context, DataTable table, List<SummaryRow> summaryRows) {
+        for (int i = 0; i < summaryRows.size(); i++) {
+            ValueExpression groupBy = summaryRows.get(i).getGroupByValueExpression(context, table.getVar());
+            if (groupBy != null) {
+                return groupBy;
+            }
+        }
+
+        return null;
     }
 
     protected void encodeFrozenRows(FacesContext context, DataTable table, int columnStart, int columnEnd) throws IOException {
@@ -1167,12 +1195,22 @@ public class DataTableRenderer extends DataRenderer<DataTable> {
         writer.endElement("tbody");
     }
 
+    /**
+     * No longer called by this renderer, only kept so subclassed renderers calling or overriding it still compile.
+     *
+     * @deprecated use {@link #encodeSummaryRow(FacesContext, List, ValueExpression)} instead
+     */
+    @Deprecated
     protected void encodeSummaryRow(FacesContext context, List<SummaryRow> summaryRows, SortMeta sort) throws IOException {
+        encodeSummaryRow(context, summaryRows, sort == null ? null : sort.getSortBy());
+    }
+
+    protected void encodeSummaryRow(FacesContext context, List<SummaryRow> summaryRows, ValueExpression groupBy) throws IOException {
         for (int i = 0; i < summaryRows.size(); i++) {
             SummaryRow summaryRow = summaryRows.get(i);
             MethodExpression me = summaryRow.getListener();
             if (me != null) {
-                me.invoke(context.getELContext(), new Object[]{sort.getSortBy()});
+                me.invoke(context.getELContext(), new Object[]{groupBy});
             }
 
             summaryRow.encodeAll(context);
@@ -1486,7 +1524,7 @@ public class DataTableRenderer extends DataRenderer<DataTable> {
             writer.writeAttribute("class", HTML.RADIOBUTTON_CLASS, null);
 
             writer.startElement("div", null);
-            writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
+            writer.writeAttribute("class", "p-hidden-accessible", null);
             encodeNativeRadio(context, component, checked, disabled);
             writer.endElement("div");
 

@@ -194,15 +194,20 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
 
         //itemtip
         if (this.cfg.itemtip) {
-            this.itemtip = $('<div id="' + this.id + '_itemtip" class="ui-autocomplete-itemtip ui-state-highlight ui-widget ui-shadow"></div>').appendTo(document.body);
+            this.itemtip = $('<div id="' + this.id + '_itemtip" class="ui-autocomplete-itemtip ui-state-highlight ui-widget"></div>').appendTo(document.body);
             this.cfg.itemtipMyPosition = this.cfg.itemtipMyPosition || 'left top';
             this.cfg.itemtipAtPosition = this.cfg.itemtipAtPosition || 'right bottom';
             this.cfg.checkForScrollbar = (this.cfg.itemtipAtPosition.indexOf('right') !== -1);
+            var removeItemtip = function() {
+                this.itemtip.remove();
+            };
+            this.addRefreshListener(removeItemtip);
+            this.addDestroyListener(removeItemtip);
         }
 
         //aria
         this.input.attr('aria-autocomplete', 'list');
-        this.jq.append('<span role="status" aria-live="polite" class="ui-autocomplete-status ui-helper-hidden-accessible"></span>');
+        this.jq.append('<span role="status" aria-live="polite" class="ui-autocomplete-status p-hidden-accessible"></span>');
         this.status = this.jq.children('.ui-autocomplete-status');
     }
 
@@ -251,6 +256,11 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
         this.cacheTimeout = setInterval(function() {
             $this.clearCache();
         }, this.cfg.cacheTimeout);
+        var stopCacheTimeout = function() {
+            clearInterval(this.cacheTimeout);
+        };
+        this.addRefreshListener(stopCacheTimeout);
+        this.addDestroyListener(stopCacheTimeout);
     }
 
     /**
@@ -704,7 +714,9 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
 
         var value = $this.input.val();
 
-        if ($this.cfg.pojo && !$this.cfg.multiple) {
+        // #15304 with forceSelection the hidden input only holds validated values, as a queued request
+        // may serialize the form before the typed text has been validated on blur
+        if ($this.cfg.pojo && !$this.cfg.multiple && (!$this.cfg.forceSelection || !value.length)) {
             $this.hinput.val(value);
         }
 
@@ -756,12 +768,12 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
                     'top': '',
                     'z-index': PrimeFaces.nextZindex(),
                     'width': content.outerWidth() + 'px'
-                })
-                .position({
-                    my: this.cfg.itemtipMyPosition
-                    , at: this.cfg.itemtipAtPosition
-                    , of: item
                 });
+            PrimeFaces.utils.position(this.itemtip, {
+                my: this.cfg.itemtipMyPosition
+                , at: this.cfg.itemtipAtPosition
+                , of: item
+            });
 
             //scrollbar offset
             if (this.cfg.checkForScrollbar) {
@@ -1010,8 +1022,8 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
                     html += '<li id="' + $this.id + '_item_' + index + '" class="ui-autocomplete-item ui-autocomplete-list-item" data-item-value="' + PrimeFaces.escapeHTML(itemValue, true) + '" data-item-label="' + PrimeFaces.escapeHTML(labelEncoded, true) + '" role="option">' + PrimeFaces.escapeHTML(labelEncoded, true) + '</li>';
                 });
                 if (suggestions.moreAvailable && $this.cfg.moreText) {
-                    var moreTextEncoded = $("<div>").text($this.cfg.moreText).html();
-                    html += '<li id="' + $this.id + '_item_more' + '" class="ui-autocomplete-item ui-autocomplete-moretext" role="option" aria-label="' + $this.cfg.moreText + '">' + PrimeFaces.escapeHTML(moreTextEncoded, true) + '</li>';
+                    var moreTextEncoded = PrimeFaces.escapeHTML($("<div>").text($this.cfg.moreText).html(), true);
+                    html += '<li id="' + $this.id + '_item_more' + '" class="ui-autocomplete-item ui-autocomplete-moretext" role="option" aria-label="' + moreTextEncoded + '" data-item-label="' + moreTextEncoded + '">' + moreTextEncoded + '</li>';
                 }
                 html += '</ul>';
 
@@ -1202,7 +1214,7 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
                 var itemLabelEscaped = PrimeFaces.escapeHTML(itemLabel);
                 var itemValueEscaped = PrimeFaces.escapeHTML(itemValue);
                 var itemDisplayMarkup = '<li data-token-value="' + itemValueEscaped;
-                itemDisplayMarkup += '"class="ui-autocomplete-token ui-state-active ui-helper-hidden';
+                itemDisplayMarkup += '"class="ui-autocomplete-token ui-state-active p-hidden';
                 itemDisplayMarkup += (itemStyleClass === '' ? '' : ' ' + itemStyleClass) + '" '
                 itemDisplayMarkup += 'role="option" aria-label="' + itemLabelEscaped + '" ';
                 itemDisplayMarkup += 'aria-selected="true">';
@@ -1210,7 +1222,7 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
                 itemDisplayMarkup += '<span class="ui-autocomplete-token-label">' + itemLabelEscaped + '</span></li>';
 
                 $this.inputContainer.before(itemDisplayMarkup);
-                $this.multiItemContainer.children('.ui-helper-hidden').fadeIn();
+                $this.multiItemContainer.children('.p-hidden').fadeIn();
                 $this.input.val('');
                 $this.input.removeAttr('placeholder');
 
@@ -1416,7 +1428,7 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
             });
         }
         else {
-            this.panel.position({
+            PrimeFaces.utils.position(this.panel, {
                 my: this.cfg.myPos
                 , at: this.cfg.atPos
                 , of: this.cfg.multiple ? this.jq : this.input
@@ -1565,7 +1577,16 @@ PrimeFaces.widget.AutoComplete = class AutoComplete extends PrimeFaces.widget.Ba
             }
         }
 
-        if (!valid) {
+        if (valid) {
+            // #15304 sync the hidden input when a matching label was typed instead of selected
+            if (this.cfg.pojo && !this.cfg.multiple && this.items) {
+                var matchedItem = this.items.filter(':not(.ui-autocomplete-moretext)[data-item-label="' + CSS.escape(value) + '"]');
+                if (matchedItem.length) {
+                    this.hinput.val(matchedItem.attr('data-item-value'));
+                }
+            }
+        }
+        else {
             this.input.val('');
             if (!this.cfg.multiple) {
                 this.hinput.val('');
