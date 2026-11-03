@@ -31,6 +31,7 @@ import org.primefaces.event.TabCloseEvent;
 import org.primefaces.event.TabEvent;
 import org.primefaces.util.Callbacks;
 import org.primefaces.util.ComponentUtils;
+import org.primefaces.util.LangUtils;
 
 import java.util.Map;
 
@@ -55,19 +56,20 @@ public class TabView extends TabViewBaseImpl {
 
     public static final String COMPONENT_TYPE = "org.primefaces.component.TabView";
 
-    public static final String CONTAINER_CLASS = "ui-tabs ui-widget ui-widget-content ui-hidden-container";
-    public static final String NAVIGATOR_CLASS = "ui-tabs-nav ui-widget-header";
-    public static final String INACTIVE_TAB_HEADER_CLASS = "ui-tabs-header ui-state-default";
-    public static final String ACTIVE_TAB_HEADER_CLASS = "ui-tabs-header ui-state-default ui-tabs-selected ui-state-active";
-    public static final String PANELS_CLASS = "ui-tabs-panels";
-    public static final String ACTIVE_TAB_CONTENT_CLASS = "ui-tabs-panel ui-widget-content";
-    public static final String INACTIVE_TAB_CONTENT_CLASS = "ui-tabs-panel ui-widget-content p-hidden";
-    public static final String NAVIGATOR_SCROLLER_CLASS = "ui-tabs-navscroller";
-    public static final String NAVIGATOR_LEFT_CLASS = "ui-tabs-navscroller-btn ui-tabs-navscroller-btn-left ui-state-default";
-    public static final String NAVIGATOR_RIGHT_CLASS = "ui-tabs-navscroller-btn ui-tabs-navscroller-btn-right ui-state-default";
-    public static final String NAVIGATOR_LEFT_ICON_CLASS = "ui-icon ui-icon-carat-1-w";
-    public static final String NAVIGATOR_RIGHT_ICON_CLASS = "ui-icon ui-icon-carat-1-e";
-    public static final String SCROLLABLE_TABS_CLASS = "ui-tabs-scrollable";
+    public static final String CONTAINER_CLASS = "p-tabs p-widget p-widget-content p-hidden-container";
+    public static final String NAVIGATOR_CLASS = "p-tabs-nav p-widget-header";
+    public static final String INACTIVE_TAB_HEADER_CLASS = "p-tabs-header p-state-default";
+    public static final String ACTIVE_TAB_HEADER_CLASS = "p-tabs-header p-state-default p-tabs-selected p-state-active";
+    public static final String PANELS_CLASS = "p-tabs-panels";
+    public static final String ACTIVE_TAB_CONTENT_CLASS = "p-tabs-panel p-widget-content";
+    public static final String INACTIVE_TAB_CONTENT_CLASS = "p-tabs-panel p-widget-content p-hidden";
+    public static final String NAVIGATOR_SCROLLER_CLASS = "p-tabs-navscroller";
+    public static final String NAVIGATOR_LEFT_CLASS = "p-tabs-navscroller-btn p-tabs-navscroller-btn-left p-state-default";
+    public static final String NAVIGATOR_RIGHT_CLASS = "p-tabs-navscroller-btn p-tabs-navscroller-btn-right p-state-default";
+    public static final String NAVIGATOR_LEFT_ICON_CLASS = "p-icon p-prev-icon p-tabs-prev-icon";
+    public static final String NAVIGATOR_RIGHT_ICON_CLASS = "p-icon p-next-icon p-tabs-next-icon";
+    public static final String CLOSE_ICON_CLASS = "p-icon p-close-icon p-tabs-close-icon";
+    public static final String SCROLLABLE_TABS_CLASS = "p-tabs-scrollable";
 
     public boolean isContentLoadRequest(FacesContext context) {
         return context.getExternalContext().getRequestParameterMap().containsKey(getClientId(context) + "_contentLoad");
@@ -128,7 +130,37 @@ public class TabView extends TabViewBaseImpl {
         }
     }
 
-    protected void resetActiveIndex() {
+    /**
+     * Returns the key or index of the active tab. Non-String values (e.g. an <code>int</code> bean property) are converted
+     * to a String.
+     *
+     * @return the key or index of the active tab
+     */
+    @Override
+    public String getActive() {
+        Object active = getStateHelper().eval(PropertyKeys.active);
+        return active == null ? null : active.toString();
+    }
+
+    /**
+     * Sets the index of the active tab. When called at runtime (e.g. from a listener), it clears a local <code>active</code>
+     * value (e.g. decoded from the request), which would otherwise take precedence.
+     *
+     * @param activeIndex the 0-based index of the active tab
+     */
+    @Override
+    public void setActiveIndex(int activeIndex) {
+        super.setActiveIndex(activeIndex);
+
+        // Facelets sets the tag attributes before the component is added to the view; there active takes precedence over
+        // activeIndex, regardless of the order in which the attributes are applied
+        if (getParent() != null) {
+            getStateHelper().remove(PropertyKeys.active);
+        }
+    }
+
+    protected void resetActive() {
+        getStateHelper().remove(PropertyKeys.active);
         getStateHelper().remove(PropertyKeys.activeIndex);
     }
 
@@ -141,16 +173,73 @@ public class TabView extends TabViewBaseImpl {
         super.processUpdates(context);
 
         ELContext elContext = getFacesContext().getELContext();
-        ValueExpression expr = ValueExpressionAnalyzer.getExpression(elContext,
-                getValueExpression(PropertyKeys.activeIndex.toString()), true);
-        if (expr != null && !expr.isReadOnly(elContext)) {
-            expr.setValue(elContext, getActiveIndex());
-            resetActiveIndex();
+        ValueExpression activeExpr = ValueExpressionAnalyzer.getExpression(elContext,
+                getValueExpression(PropertyKeys.active.toString()), true);
+
+        // the bean gets the requested index (as posted by the client), not the index of the tab rendered as active,
+        // which may differ if the requested tab is not rendered, see #forEachTab - same as before the key support
+        if (activeExpr != null) {
+            if (!activeExpr.isReadOnly(elContext)) {
+                Class<?> type = activeExpr.getType(elContext);
+                boolean index = type == int.class || type == Integer.class;
+                activeExpr.setValue(elContext, index ? resolveActiveIndex() : getActive());
+                resetActive();
+            }
+        }
+        else {
+            // Fallback to deprecated activeIndex
+            ValueExpression activeIndexExpr = ValueExpressionAnalyzer.getExpression(elContext,
+                    getValueExpression(PropertyKeys.activeIndex.toString()), true);
+            if (activeIndexExpr != null && !activeIndexExpr.isReadOnly(elContext)) {
+                activeIndexExpr.setValue(elContext, resolveActiveIndex());
+                resetActive();
+            }
+        }
+    }
+
+    /**
+     * Resolves the index of the active tab, either from the key or the index defined via <code>active</code>,
+     * falling back to the deprecated <code>activeIndex</code>.
+     *
+     * @return the 0-based index of the active tab
+     */
+    public int resolveActiveIndex() {
+        String active = getActive();
+
+        // Deprecated
+        if (active == null) {
+            return getActiveIndex();
+        }
+
+        if (LangUtils.isBlank(active)) {
+            return 0;
+        }
+
+        int index = findTabIndexByKey(active);
+        if (index != -1) {
+            return index;
+        }
+
+        try {
+            return Integer.parseInt(active.trim());
+        }
+        catch (NumberFormatException e) {
+            return 0;
         }
     }
 
     public void forEachTab(Callbacks.TriConsumer<Tab, Integer, Boolean> callback) {
-        int activeIndex = getActiveIndex();
+        forEachTab(resolveActiveIndex(), callback);
+    }
+
+    /**
+     * Iterates over the rendered tabs, using an already resolved active index (see {@link #resolveActiveIndex()}), so it is
+     * resolved only once if the tabs are iterated multiple times, e.g. for the headers and the contents.
+     *
+     * @param activeIndex the 0-based index of the active tab
+     * @param callback the callback receiving the tab, its index and whether it is active
+     */
+    public void forEachTab(int activeIndex, Callbacks.TriConsumer<Tab, Integer, Boolean> callback) {
         boolean activeTabRendered = false;
 
         if (isRepeating()) {
@@ -214,7 +303,7 @@ public class TabView extends TabViewBaseImpl {
     public void restoreMultiViewState() {
         TabViewState ts = getMultiViewState(false);
         if (ts != null) {
-            setActiveIndex(ts.getActiveIndex());
+            setActive(ts.getActive());
         }
     }
 
@@ -229,6 +318,6 @@ public class TabView extends TabViewBaseImpl {
 
     @Override
     public void resetMultiViewState() {
-        setActiveIndex(0);
+        setActive(null);
     }
 }

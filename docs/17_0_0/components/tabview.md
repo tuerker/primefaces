@@ -63,6 +63,28 @@ When the tabs to display are not static, use the built-in iteration feature simi
 </p:tabView>
 ```
 
+## Active Tab
+The active tab is defined with the _active_ attribute, which accepts either the 0-based index of the tab or the
+_key_ of a tab. Using keys is recommended whenever tabs are rendered conditionally or created dynamically, since
+indexes shift as soon as tabs are added or removed, whereas a key always refers to the same tab.
+
+```xhtml
+<p:tabView active="second">
+    <p:tab key="first" title="Tab One" rendered="#{bean.showFirstTab}">
+        <h:outputText value="Lorem" />
+    </p:tab>
+    <p:tab key="second" title="Tab Two">
+        <h:outputText value="Ipsum" />
+    </p:tab>
+</p:tabView>
+```
+
+When _active_ is bound to a bean property, the active tab is written back to it: a `String` property receives the key
+of the tab (or its index, if the tab defines no key), an `int` / `Integer` property receives the index. Bind a `String`
+property when using keys.
+
+The _activeIndex_ attribute is deprecated in favor of _active_ and will be removed in a future version.
+
 ## Orientations
 Four different orientations are available; _top(default)_ , _left_ , _right_ and _bottom_.
 
@@ -123,8 +145,8 @@ is the list of structural style classes.
 
 | Class | Applies |
 | --- | --- |
-.ui-tabs | Main tabview container element
-.ui-tabs-{orientation} | Orientation specific (top, bottom, righ, left) container.
-.ui-tabs-nav | Main container of tab headers
-.ui-tabs-panel | Each tab container
-.ui-tabs-scrollable | Container element of a scrollable tabview.
+.p-tabs | Main tabview container element
+.p-tabs-{orientation} | Orientation specific (top, bottom, righ, left) container.
+.p-tabs-nav | Main container of tab headers
+.p-tabs-panel | Each tab container
+.p-tabs-scrollable | Container element of a scrollable tabview.

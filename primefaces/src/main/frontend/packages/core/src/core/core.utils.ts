@@ -10,6 +10,21 @@ import { scrollParent as closestScrollParent } from "../interaction/interaction.
  * The class with various utilities needed by PrimeFaces.
  */
 export class Utils {
+    /** Original source positions of relocated overlay widgets, retained across direct AJAX updates. */
+    private overlayPlaceholders = new WeakMap<BaseWidget, JQuery>();
+
+    /**
+     * Removes the source marker of a relocated overlay widget without removing the overlay itself (its `remove`
+     * handler).
+     * @param widget The relocated overlay widget.
+     */
+    removeOverlayPlaceholder(widget: BaseWidget): void {
+        const placeholder = this.overlayPlaceholders.get(widget);
+        placeholder?.off('remove.pfOverlay');
+        placeholder?.[0]?.remove();
+        this.overlayPlaceholders.delete(widget);
+    }
+
     /**
      * TextEncoder instance used for string encoding operations.
      * 
@@ -28,7 +43,7 @@ export class Utils {
      */
     resolveAppendTo(widget: DynamicOverlayWidget, target: JQuery, overlay: JQuery): string | null | undefined {
         if (widget && target && target[0]) {
-            var dialog = target[0].closest('.ui-dialog');
+            var dialog = target[0].closest('.p-dialog');
 
             if (dialog && overlay && overlay.length) {
                 var $dialog = $(dialog);
@@ -147,6 +162,12 @@ export class Utils {
                 && !appendTo.is(overlay)) {
 
             this.removeDynamicOverlay(widget, overlay, overlayId, appendTo);
+            this.removeOverlayPlaceholder(widget);
+            // only the widget element itself leaves its source container, a panel (e.g. of p:selectOneMenu) is
+            // removed when its widget is destroyed
+            if (overlay.is(widget.jq)) {
+                this.overlayPlaceholders.set(widget, $('<span hidden class="p-overlay-placeholder"></span>').insertBefore(overlay));
+            }
 
             overlay.appendTo(appendTo);
         }
@@ -180,7 +201,7 @@ export class Utils {
         }
 
         var modalId = id + '_modal';
-        var modalOverlay = $('<div id="' + modalId + '" class="ui-widget-overlay ui-dialog-mask"></div>');
+        var modalOverlay = $('<div id="' + modalId + '" class="p-widget-overlay p-dialog-mask"></div>');
         modalOverlay.appendTo($(document.body));
         modalOverlay.css('z-index' , String(zIndex));
 
@@ -517,9 +538,15 @@ export class Utils {
             var appendTo = this.resolveDynamicOverlayContainer(widget);
             this.appendDynamicOverlay(widget, overlay, overlayId, appendTo);
 
+            // A direct update reuses the source marker but must track the new DOM element.
+            // A container update creates a new marker, even if the old container is still connected.
+            const placeholder = this.overlayPlaceholders.get(widget);
+            placeholder?.off('remove.pfOverlay').on('remove.pfOverlay', () => overlay.remove());
+
             widget.addDestroyListener(() => {
                 var appendTo = this.resolveDynamicOverlayContainer(widget);
                 // pass null as overlay - as every! overlay with this overlayId can be removed on destroying the whole widget
+                this.removeOverlayPlaceholder(widget);
                 this.removeDynamicOverlay(widget, null, overlayId, appendTo);
             });
 
@@ -527,6 +554,9 @@ export class Utils {
                 var appendTo = this.resolveDynamicOverlayContainer(widget);
                 this.cleanupDynamicOverlay(widget, overlay, overlayId, appendTo);
             });
+        }
+        else {
+            this.removeOverlayPlaceholder(widget);
         }
 
         return overlay;
@@ -715,14 +745,14 @@ export class Utils {
      * {@link enableScrolling}.
      */
     preventScrolling(): void {
-        $(document.body).addClass('ui-overflow-hidden');
+        $(document.body).addClass('p-overflow-hidden');
     }
 
     /**
      * Enables scrolling again if previously disabled via {@link preventScrolling}.
      */
     enableScrolling(): void {
-        $(document.body).removeClass('ui-overflow-hidden');
+        $(document.body).removeClass('p-overflow-hidden');
     }
 
     /**
@@ -960,7 +990,7 @@ export class Utils {
         if (input.is(':disabled')) {
             input.prop('disabled', false);
         }
-        jq.removeClass('ui-state-disabled');
+        jq.removeClass('p-state-disabled');
     }
 
     /**
@@ -976,7 +1006,7 @@ export class Utils {
         if (!input.is(':disabled')) {
             input.prop('disabled', true);
         }
-        jq.addClass('ui-state-disabled');
+        jq.addClass('p-state-disabled');
     }
 
     /**
@@ -986,7 +1016,7 @@ export class Utils {
      */
     enableButton(jq: JQuery): void {
         if (jq) {
-            jq.removeClass('ui-state-disabled')
+            jq.removeClass('p-state-disabled')
               .prop( "disabled", false)
               .removeAttr('aria-disabled');
         }
@@ -999,8 +1029,8 @@ export class Utils {
      */
     disableButton(jq: JQuery): void {
         if (jq) {
-            jq.removeClass('ui-state-hover ui-state-focus ui-state-active')
-              .addClass('ui-state-disabled')
+            jq.removeClass('p-state-hover p-state-focus p-state-active')
+              .addClass('p-state-disabled')
               .attr('disabled', 'disabled')
               .attr('aria-disabled', 'true');
         }
@@ -1267,7 +1297,7 @@ export class Utils {
         if (!jq || !jq.parent()) {
             return false;
         }
-        return jq.parent().hasClass('ui-float-label');
+        return jq.parent().hasClass('p-float-label');
     }
 
     /**
@@ -1306,10 +1336,10 @@ export class Utils {
         }
 
         if (isEmpty) {
-            element.removeClass('ui-inputwrapper-filled');
+            element.removeClass('p-inputwrapper-filled');
         }
         else {
-            element.addClass('ui-inputwrapper-filled');
+            element.addClass('p-inputwrapper-filled');
         }
 
         return undefined;
@@ -1379,10 +1409,10 @@ export class Utils {
      */
     nextStickyZindex(): number {
         // Get the z-index of the highest visible sticky, or use PrimeFaces.nextZindex() + 1 if none found
-        var highestStickyZIndex = this.roundTowardsZero($('.ui-sticky:visible').last().zIndex()) || parseInt(core.nextZindex()) + 1;
+        var highestStickyZIndex = this.roundTowardsZero($('.p-sticky:visible').last().zIndex()) || parseInt(core.nextZindex()) + 1;
 
         // GitHub #9295 Adjust z-index based on overlays
-        var overlays = $('.ui-widget-overlay:visible');
+        var overlays = $('.p-widget-overlay:visible');
         if (overlays.length) {
             for (const overlay of overlays) {
                 var overlayZIndex = this.roundTowardsZero($(overlay).zIndex()) - 1;
@@ -1459,7 +1489,7 @@ export class Utils {
         const classes = jq.attr('class')?.split(' ') ?? [];
 
         // Find the index of the target class
-        const targetIndex = classes.indexOf('ui-c');
+        const targetIndex = classes.indexOf('p-c');
 
         // If the target class is found, remove all classes after it and add the new class
         if (targetIndex !== -1) {
